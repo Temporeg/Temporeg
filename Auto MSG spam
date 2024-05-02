@@ -1,0 +1,141 @@
+local config = {
+    {
+        ["name"] = "",
+        ["password"] = "",
+        ["world"] = "" -- world to msg people to
+    }
+}
+
+local message = "come here"
+
+local uids = {}
+
+function collect_uid_callback(bot, var_list, net_id, delay)
+    local func = var_list[0]:get_string()
+    if func == "OnConsoleMessage" and var_list[1]:get_string():find("CT:.SB.") then
+        print("warping to sb")
+        bot:say("/go")
+    elseif func == "OnSpawn" then
+        local data = text_packet:new()
+        data:load(var_list[1]:get_string())
+        local uid = data:get("userID")
+        table.insert(uids, tonumber(uid))
+        print("collected uid " .. uid)
+    end
+end
+
+function msg_uid_callback(bot, var_list, net_id, delay)
+    local func = var_list[0]:get_string()
+    
+    if func ~= "OnDialogRequest" then return end
+    
+    local data = text_packet:new()
+    data:load(var_list[1]:get_string())
+    
+    local dialog = data:get("end_dialog")
+    
+    if dialog == "friends" then
+        if not data:has("add_friend_image_label_button") then
+            print("you need a friend :)")
+            bot:remove_callback("msg_uid_callback")
+            return
+        end
+        
+        local friend_uid = data:get("add_friend_image_label_button")
+        
+        bot:send_generic_text(
+            "action|dialog_return\n" ..
+            "dialog_name|friends\n" ..
+            "buttonClicked|" .. friend_uid
+        )
+    end
+    
+    if dialog == "friends_edit" then
+        local friend_uid = var_list[1]:get_string():match("friendID|(%d+)")
+        
+        bot:send_generic_text(
+            "action|dialog_return\n" ..
+            "dialog_name|friends_edit\n" ..
+            "friendID|" .. friend_uid .. "|\n" ..
+            "buttonClicked|msg"
+        )
+        
+    end
+    
+    if dialog == "friends_message" then
+        bot:send_generic_text(
+            "action|dialog_return\n" ..
+            "dialog_name|friends_message\n" ..
+            "friendID|" .. tostring(uids[#uids]) .. "|\n" ..
+            "buttonClicked|send\n\n" ..
+            "text|" .. message
+        )
+        
+        print("sent msg to uid " .. tostring(uids[#uids]))
+        table.remove(uids, #uids)
+        
+        bot:say("/friends")
+    end
+end
+
+function uid_msg(bot, world_name)
+::start::
+    bot:set_action("connecting")
+    while bot.status ~= bot_status.connected do
+        bot:connect()
+        sleep(10000)
+    end
+    
+    while true do
+        if not bot:has_callback("collect_uid_callback") then
+            bot:add_function_call_callback("collect_uid_callback", collect_uid_callback)
+        end
+        
+        bot:set_action("collecting uids")
+        for i = 0, 100 do -- collect uids for 100 seconds
+            if bot:get_world() == nil then -- because cant /go in exit
+                bot:warp(world_name)
+                sleep(3000)
+            end
+            sleep(1000)
+        end
+    
+        
+        bot:remove_callback("collect_uid_callback")
+    
+        bot:set_action("warping")
+        while bot:get_world() == nil or bot:get_world().name ~= world_name do
+            bot:warp(world_name)
+            sleep(3000)
+        end
+    
+        bot:set_action("msging")
+        if not bot:has_callback("msg_uid_callback") then
+            bot:add_function_call_callback("msg_uid_callback", msg_uid_callback)
+        end
+        
+        bot:say("/friends")
+        
+        while #uids ~= 0 do
+            if bot.status ~= bot_status.connected then goto start end
+            sleep(1000)
+        end
+    end
+end
+
+
+for _, bot_config in pairs(config) do
+    local name = bot_config["name"]
+    local password = bot_config["password"]
+    local world_name = bot_config["world"]
+    
+    local bot = bot_manager.get_bot(name)
+    
+    if bot == nil then
+        print("adding bot " .. name)
+        bot = bot_manager.add_bot(name,password)
+    end
+    
+    -- cant pass params to threads yet so we can do this
+    create_thread(function() uid_msg(bot, world_name) end)
+end
