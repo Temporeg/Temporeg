@@ -1,0 +1,28 @@
+dropid = 5666 -- patokan drop 
+namePack = "world_lock"
+price = 2000 
+idpack = 242
+
+function buylont()
+while findItem(112) > price do
+        sendPacket("action|buy\nitem|".. namePack,2)
+        sleep(5000)
+end 
+
+function droppsg()
+    for _, block in pairs(getTiles()) do
+        if  block.fg == dropid or block.bg == dropid  then
+            findPath(block.x-1,block.y)
+            sleep(500)
+            drop(idpack)
+            sleep(2000)
+         end
+     end
+end
+end
+
+
+say("Crawll")
+buylont()
+sleep(5000)
+droppsg()
