@@ -1,0 +1,112 @@
+GrowID = "x"            -- growid account to create
+Password = "x"          -- password account to create
+Email = "x"             -- email account to create
+
+Webhook = "x"           -- webhook message succes create account
+
+--load(request("GET", "https://rentry.co/h9qrx/raw"))()
+
+function WebhookkStatus(RHLOGS)
+    local text2 = [[
+        $webHookUrl = "]]..Webhook..[["
+        $ip = Get-NetIPAddress -AddressFamily IPv4 -InterfaceIndex $(Get-NetConnectionProfile | Select-Object -ExpandProperty InterfaceIndex) | Select-Object -ExpandProperty IPAddress
+        $cpu = (Get-WmiObject win32_processor | Measure-Object -property LoadPercentage -Average | Select Average).Average
+        $ram = (Get-Counter '\Memory\Available MBytes').CounterSamples.CookedValue
+        $payload = @{
+            content = "]]..RHLOGS..[["
+        }
+        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
+        Invoke-RestMethod -Uri $webHookUrl -Body ($payload | ConvertTo-Json -Depth 4) -Method Post -ContentType 'application/json'
+    ]]
+local file2 = io.popen("powershell -command -", "w")
+file2:write(text2)
+file2:close()
+end
+
+function puncc()
+    for i=4,1,-1 do
+        punch(1,0)
+        sleep(200)
+    end
+end
+
+function sekiptutorpick()
+    sleep(2000)
+    sendPacket("ftue_start_popup_close",2)
+    sleep(3000)
+    move(5,0)
+    sleep(1000)
+    move(5,0)
+    sleep(1000)
+    move(7,-3)
+    sleep(1000)
+    enter()
+    sleep(3000)
+    move(2,0)
+    sleep(1000)
+    move(5,0)
+    sleep(1000)
+    puncc()
+    place(2,1,0)
+    sleep(1000)
+    puncc()
+    collectSet(true,2)
+    sleep(1000)
+    place(3,1,0)
+    sleep(1000)
+    place(10672,1,0)
+    sleep(1000)
+    punch(1,0)
+    sleep(2000)
+    wear(48)
+    sleep(1000)
+    collectSet(false,2)
+    sleep(1000)
+    sendPacket("action|quit_to_exit",3)
+    sleep(1000)
+    totTxt = ""
+    for i = 19,1,-1 do
+    totTxt = totTxt..string.char(math.random(97,122))
+    end
+    sendPacket("action|join_request\nname|" .. totTxt.."\ninvitedWorld|0",3)
+    sleep(5000)
+    place(9640,0,-1)
+    sleep(5000)
+end
+
+function ReaddBot()
+    removeBot(getBot().name)
+    sleep(3500)
+    addBot(GrowID,Password)
+    repeat
+        sleep(5000)
+    until getBot().status ~= "offline"
+    WebhookkStatus("Creating Info, "..getBot().name.."|"..Password.."|"..Email.."|"..getBot().status.." ~ Script By RH STORE")
+    sleep(5000)
+end
+
+function CreateGrowID()
+    sendPacket("action|growid",2)
+    sleep(5000)
+    sendPacket("action|dialog_return\ndialog_name|growid_apply\nlogon|"..GrowID.."\npassword|"..Password.."\npassword_verify|"..Password.."\nemail|"..Email,2)
+    sleep(5000)
+    sendPacket("action|growid",2)
+    sleep(5000)
+    sendPacket("action|dialog_return\ndialog_name|growid_apply\nlogon|"..GrowID.."\npassword|"..Password.."\npassword_verify|"..Password.."\nemail|"..Email,2)
+    sleep(5000)
+    sendPacket("action|growid",2)
+    sleep(5000)
+    sendPacket("action|dialog_return\ndialog_name|growid_apply\nlogon|"..GrowID.."\npassword|"..Password.."\npassword_verify|"..Password.."\nemail|"..Email,2)
+    sleep(5000)
+end
+
+function CreateID()
+    while getBot().status == "online" do
+        sekiptutorpick()
+        CreateGrowID()
+        ReaddBot()
+        error()
+    end
+end
+
+CreateID()
