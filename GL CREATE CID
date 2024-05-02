@@ -1,0 +1,13 @@
+Nickname = "Penny"
+Password = "gumabl@1"
+Email = "email@domai.com"
+
+sleep(3000)
+sendPacket("action|growid",2)
+sleep(3000)
+sendPacket("action|dialog_return\ndialog_name|growid_apply\nlogon|" .. Nickname ..  "\npassword|" .. Password .. "\npassword_verify|" .. Password .. "\nemail|" .. Email,2)
+sleep(3000)
+sendPacket("action|growid",2)
+sleep(3000)
+sendPacket("action|dialog_return\ndialog_name|growid_apply\nlogon|" .. Nickname ..  "\npassword|" .. Password .. "\npassword_verify|" .. Password .. "\nemail|" .. Email,2)
+sleep(1000)
