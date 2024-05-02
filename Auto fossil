@@ -1,0 +1,105 @@
+worlds = {"XXX", "XXX", "XXX"}
+startFrom = 1
+doorFarm = "XXX"
+
+--=========================	Batas Edit =========================
+
+ffossil = {}
+start_fossil = 1 -- gk usah diganti
+
+for _,tile in pairs(getTiles())do
+    if tile.fg == 3918 then
+        ffossil[#ffossil+1]={posX=tile.x,posY=tile.y}
+    end
+end
+
+function warp(world,id)
+    while getBot().world ~= world or getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32)).fg == 6 do
+        while getBot().status ~= "online" do
+            sleep(1000)
+        end
+        sendPacket("action|join_request\nname|"..world.."|"..id.."\ninvitedWorld|0", 3)
+        sleep(4000)
+    end
+end
+
+function NextWorld()
+    startFrom=startFrom+1
+    start_fossil = 1
+    if startFrom>#worlds then
+        removeBot(getBot().name)
+    end
+    sleep(1000)
+    warp(worlds[startFrom], doorFarm)
+    sleep(1000)
+end
+
+function extracted(var)
+    if var[0]:find("OnTalkBubble") and var[2]:find("I unearthed a Fossil!") then
+        find_extracted = false
+        fossil_rock = true
+    end
+end
+
+function scanFossil()
+    m=0
+    for ,tile in pairs(getTiles())do
+        if tile.fg==3918 then
+            m=m+1
+        end
+    end
+    m=math.floor(m)
+    return m
+end
+
+function main()
+    findPath(ffossil[start_fossil].posX,ffossil[start_fossil].posY-1)
+    sleep(800)
+    while getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32) + 1).fg == 3918 do
+        while find_extracted and not findClothes(3932) do
+            wear(3932)
+            sleep(1000)
+        end
+        a = 1
+        while find_extracted do
+            punch(0,1)
+            a = a + 1
+            sleep(1000)
+            if a > 25 then
+                sleep(6000)
+                a = 1
+            end
+        end
+        while fossil_rock and not findClothes(3934) do
+            wear(3934)
+            sleep(1000)
+        end
+        while fossil_rock do
+            punch(0,1)
+            sleep(160)
+            if getTile(math.floor(getBot().x / 32),math.floor(getBot().y / 32) + 1).fg ~= 3918 then
+                fossil_rock = false
+            end
+        end
+        sleep(100)
+    end
+    place(4132, 0, 1)
+    sleep(500)
+    collect(2)
+    sleep(1000)
+    start_fossil = start_fossil + 1
+    if scanFossil() == 0 then
+        nextWorld()
+    end
+end
+
+find_extracted = true
+fossil_rock = false
+addHook("onvariant", "fossil", extracted)
+
+warp(worlds[startFrom], doorFarm)
+sleep(500)
+while true do
+    main()
+    sleep(50)
+end
